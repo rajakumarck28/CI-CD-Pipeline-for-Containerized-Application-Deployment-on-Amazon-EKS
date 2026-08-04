@@ -2,8 +2,6 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_ENV = "SonarQube"
-
         IMAGE_NAME = "your-dockerhub-username/flask-auth-app"
         IMAGE_TAG = "latest"
         DOCKER_CREDS = "Dockerhub"
@@ -20,14 +18,18 @@ pipeline {
 
         stage('SonarQube Scan') {
             steps {
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh '''
-                    sonar-scanner \
-                    -Dsonar.projectKey=flask-auth-app \
-                    -Dsonar.projectName=flask-auth-app \
-                    -Dsonar.sources=. \
-                    -Dsonar.python.version=3
-                    '''
+                script {
+                    def scannerHome = tool 'SonarScanner'
+
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=flask-auth-app \
+                        -Dsonar.projectName=flask-auth-app \
+                        -Dsonar.sources=. \
+                        -Dsonar.python.version=3
+                        """
+                    }
                 }
             }
         }
@@ -46,18 +48,13 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${DOCKER_CREDS}",
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    docker logout
-                    '''
+                script {
+                    docker.withRegistry('', DOCKER_CREDS) {
+                        def image = docker.image("${IMAGE_NAME}:${IMAGE_TAG}")
+                        image.push()
+                    }
                 }
             }
         }
@@ -65,7 +62,6 @@ pipeline {
         stage('Docker Compose Rebuild') {
             steps {
                 sh '''
-                docker compose down
                 docker compose up -d --build
                 '''
             }
@@ -74,7 +70,7 @@ pipeline {
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo 'Application deployed successfully!'
         }
 
         failure {
