@@ -3,7 +3,7 @@ version: '3.8'
 services:
 
   flask-app:
-    build: .
+    image: akshay9480/flask-auth-app:latest
     container_name: flask-auth-app
 
     ports:
