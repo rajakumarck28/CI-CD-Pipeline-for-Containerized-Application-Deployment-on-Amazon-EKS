@@ -22,38 +22,132 @@
 
 # 1. Project Overview
 
-This document outlines the step-by-step process for deploying a 2-tier web application (Flask + MySQL) on an AWS EC2 instance. The deployment is containerized using Docker and Docker Compose. A complete CI/CD pipeline is established using Jenkins to automate the build and deployment process whenever new code is pushed to a GitHub repository.
+This project demonstrates how to implement a complete Continuous Integration and Continuous Deployment (CI/CD) pipeline for a Flask web application.
+
+The pipeline automatically:
+
+- Clones the source code from GitHub
+- Performs static code analysis using SonarQube
+- Builds a Docker image
+- Pushes the Docker image to Docker Hub
+- Deploys the application using Docker Compose
+- Connects the application with a MySQL database
 
 ---
 
 # 2. Architecture Diagram
 
 ```text
-+-----------------+      +----------------------+      +-----------------------------+
-|   Developer     |----->|     GitHub Repo      |----->|        Jenkins Server       |
-| (pushes code)   |      | (Source Code Mgmt)   |      |       (AWS EC2)             |
-+-----------------+      +----------------------+      |                             |
-                                                       | 1. Clone Repository         |
-                                                       | 2. Build Docker Image       |
-                                                       | 3. Run Docker Compose       |
-                                                       +--------------+--------------+
-                                                                      |
-                                                                      | Deploys
-                                                                      v
-                                                       +-----------------------------+
-                                                       |      Application Server     |
-                                                       |        (AWS EC2)            |
-                                                       |                             |
-                                                       | +-------------------------+ |
-                                                       | | Docker Container Flask | |
-                                                       | +-------------------------+ |
-                                                       |              |              |
-                                                       |              v              |
-                                                       | +-------------------------+ |
-                                                       | | Docker Container MySQL | |
-                                                       | +-------------------------+ |
-                                                       +-----------------------------+
+                    +------------------+
+                    |     GitHub       |
+                    | Flask SourceCode |
+                    +--------+---------+
+                             |
+                             |
+                             ▼
+                    +------------------+
+                    |     Jenkins      |
+                    |   CI/CD Pipeline |
+                    +--------+---------+
+                             |
+         +-------------------+------------------+
+         |                                      |
+         ▼                                      ▼
++------------------+                +-------------------+
+|   SonarQube      |                | Docker Build      |
+| Code Analysis    |                | Docker Image      |
++------------------+                +---------+---------+
+                                              |
+                                              ▼
+                                   +----------------------+
+                                   |    Docker Hub        |
+                                   | Image Repository     |
+                                   +----------+-----------+
+                                              |
+                                              ▼
+                                   +----------------------+
+                                   | Docker Compose       |
+                                   | Deployment           |
+                                   +----------+-----------+
+                                              |
+                                              ▼
+                                   +----------------------+
+                                   | Flask Application    |
+                                   +----------+-----------+
+                                              |
+                                              ▼
+                                   +----------------------+
+                                   | MySQL Database       |
+                                   +----------------------+
 ```
+
+# Technologies Used
+## Technology	Purpose
+| Technology           | Purpose                    |
+| -------------------- | -------------------------- |
+| Python               | Backend Development        |
+| Flask                | Web Framework              |
+| MySQL                | Database                   |
+| Git                  | Version Control            |
+| GitHub               | Source Code Repository     |
+| Jenkins              | CI/CD Automation           |
+| SonarQube            | Static Code Analysis       |
+| Docker               | Containerization           |
+| Docker Hub           | Image Repository           |
+| Docker Compose       | Multi-container Deployment |
+| Linux (Amazon Linux) | Deployment Environment     |
+
+---
+# Project Structure
+Automated-CICD-Pipeline-for-Containerized-Flask-Application
+│
+├── app.py
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── Jenkinsfile
+├── templates/
+│   ├── login.html
+│   ├── register.html
+│   └── dashboard.html
+├── static/
+├── database/
+│   └── init.sql
+└── README.md
+
+---
+# CI/CD Pipeline Workflow
+
+Developer
+     │
+     ▼
+Push Code to GitHub
+     │
+     ▼
+Jenkins Pipeline Trigger
+     │
+     ▼
+Clone Repository
+     │
+     ▼
+SonarQube Code Analysis
+     │
+     ▼
+Quality Gate
+     │
+     ▼
+Build Docker Image
+     │
+     ▼
+Push Image to Docker Hub
+     │
+     ▼
+Docker Compose Deployment
+     │
+     ▼
+Flask Application Running
+
+---
 
 ---
 
@@ -76,6 +170,7 @@ This document outlines the step-by-step process for deploying a 2-tier web appli
 | HTTP | 80 |
 | Flask App | 5000 |
 | Jenkins | 8080 |
+| SonarQube | 9000 |
 
 ---
 
@@ -128,7 +223,7 @@ newgrp docker
 ## Install Java
 
 ```bash
-sudo apt install openjdk-17-jdk -y
+sudo apt install openjdk-21-jdk -y
 ```
 
 ---
@@ -179,7 +274,11 @@ http://<ec2-public-ip>:8080
 sudo usermod -aG docker jenkins
 sudo systemctl restart jenkins
 ```
+# Install SonarQube
+---
+docker run -d --name sonarqube -p 9000:9000 sonarqube:lts-community
 
+---
 ---
 
 # 6. Step 4: GitHub Repository Configuration
@@ -224,7 +323,7 @@ version: '3.8'
 services:
 
   flask-app:
-    build: .
+    image: akshay9480/flask-auth-app:latest
     container_name: flask-auth-app
 
     ports:
@@ -268,35 +367,83 @@ volumes:
 
 ```groovy
 pipeline {
-
     agent any
+
+    environment {
+        IMAGE_NAME = "akshay9480/flask-auth-app"
+        IMAGE_TAG = "latest"
+        DOCKER_CREDS = "Dockerhub"
+    }
 
     stages {
 
         stage('Clone Code') {
             steps {
-                git 'https://github.com/rajakumarck28/Automated-CI-CD-Pipeline-for-a-2-Tier-Flask-Application-on-AWS.git'
+                git branch: 'main',
+                url: 'https://github.com/rajakumarck28/Automated-CICD-Pipeline-for-Containerized-Flask-Application.git'
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner'
+
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=flask-auth-app \
+                        -Dsonar.projectName=flask-auth-app \
+                        -Dsonar.sources=. \
+                        -Dsonar.python.version=3
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: false
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t flask-auth-app .'
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Stop Old Container') {
+        stage('Push Docker Image') {
             steps {
-                sh 'docker rm -f flask-auth-app || true'
+                script {
+                    docker.withRegistry('', DOCKER_CREDS) {
+                        def image = docker.image("${IMAGE_NAME}:${IMAGE_TAG}")
+                        image.push()
+                    }
+                }
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Docker Compose Rebuild') {
             steps {
-                sh 'docker run -d -p 5000:5000 --name flask-auth-app flask-auth-app'
+                sh '''
+                docker-compose up -d --build
+                '''
             }
         }
+    }
 
+    post {
+        success {
+            echo 'Application deployed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline Failed!'
+        }
     }
 }
 ```
