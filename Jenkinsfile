@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "your-dockerhub-username/flask-auth-app"
+        IMAGE_NAME = "akshay9480/flask-auth-app"
         IMAGE_TAG = "latest"
         DOCKER_CREDS = "Dockerhub"
     }
