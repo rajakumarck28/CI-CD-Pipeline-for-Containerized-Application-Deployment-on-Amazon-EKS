@@ -53,41 +53,7 @@ Automated-CICD-Pipeline-for-Containerized-Flask-Application
 └── README.md
 ```
 
-# CI/CD Pipeline Workflow
-```text
-
-Developer
-     │
-     ▼
-Push Code to GitHub
-     │
-     ▼
-Jenkins Pipeline Trigger
-     │
-     ▼
-Clone Repository
-     │
-     ▼
-SonarQube Code Analysis
-     │
-     ▼
-Quality Gate
-     │
-     ▼
-Build Docker Image
-     │
-     ▼
-Push Image to Docker Hub
-     │
-     ▼
-Docker Compose Deployment
-     │
-     ▼
-Flask Application Running
-```
-# Prerequisites
-
-Install the following software before running the project:
+# Install the following software before running the project:
 
 - Python 3.x
 - Git
@@ -402,11 +368,69 @@ pipeline {
     }
 }
 ```
+# CI/CD Pipeline Overview
+The Jenkins pipeline automates the following tasks:
+- Checkout source code from GitHub.
+- Build the Flask application.
+- Run SonarQube static code analysis.
+- Validate the SonarQube Quality Gate.
+- Build the Docker image.
+- Push the Docker image to Docker Hub.
+- Deploy the application (optional).
 
----
+# Pipeline Flow
+```text
+GitHub
+   │
+   ▼
+Jenkins
+   │
+   ├── Checkout
+   ├── SonarQube Analysis
+   ├── Quality Gate
+   ├── Docker Build
+   ├── Docker Push
+   └── Deploy
+```
 
-# Step 5: Jenkins Pipeline Creation and Execution
+# SonarQube Integration
+SonarQube is integrated into the Jenkins pipeline to perform static code analysis and enforce code quality before building the Docker image.
+SonarQube Analysis Includes
+- Bugs Detection
+- Vulnerability Analysis
+- Code Smells
+- Duplicated Code Detection
+- Maintainability Rating
+- Reliability Rating
+- Security Rating
+- Quality Gate Validation
 
+SonarScanner Command
+```bash
+sonar-scanner \
+-Dsonar.projectKey=flask-auth-app \
+-Dsonar.sources=. \
+-Dsonar.host.url=http://<SONARQUBE_SERVER>:9000 \
+-Dsonar.token=<SONAR_TOKEN>
+```
+# Jenkins Credentials
+Configure the following credentials in Jenkins before running the pipeline.
+
+```text
+┌──────────────────────────────────┬──────────────────────────────────────────┐
+│ Credential                       │ Purpose                                  │
+├──────────────────────────────────┼──────────────────────────────────────────┤
+│ GitHub Credentials               │ Clone repository                         │
+├──────────────────────────────────┼──────────────────────────────────────────┤
+│ SonarQube Token                  │ Static Code Analysis                     │
+├──────────────────────────────────┼──────────────────────────────────────────┤
+│ Docker Hub Username              │ Image Push                               │
+├──────────────────────────────────┼──────────────────────────────────────────┤
+│ Docker Hub Personal Access Token │ Docker Authentication                    │
+└──────────────────────────────────┴──────────────────────────────────────────┘
+
+```
+# Jenkins Pipeline Creation and Execution
 ## Create Jenkins Pipeline
 
 - New Item
@@ -434,7 +458,94 @@ docker ps
 ```text
 http://<ec2-public-ip>:5000
 ```
+# Jenkins Pipeline Stages
+The Jenkins pipeline automates the entire software delivery process.
 
+1️⃣ Checkout Source Code
+- Pulls the latest source code from GitHub.
+
+2️⃣ Install Dependencies
+- Installs all Python packages required by the Flask application.
+pip install -r requirements.txt
+
+3️⃣ SonarQube Code Analysis
+- Executes SonarScanner.
+- Uploads the analysis report to SonarQube.
+
+4️⃣ Quality Gate
+- Jenkins waits for SonarQube to complete the analysis.
+- If the Quality Gate fails, the pipeline stops.
+- If it passes, the pipeline proceeds to build the Docker image.
+
+5️⃣ Build Docker Image
+- docker build -t akshay9480/flask-auth-app:latest .
+
+6️⃣ Push Docker Image
+- docker push akshay9480/flask-auth-app:latest
+
+7️⃣ Deployment
+- The Docker image can be deployed through Docker compose
+
+# After a successful pipeline execution:
+- Docker image is tagged automatically.
+- Image is pushed to Docker Hub.
+- Latest version is available for deployment.
+
+Example:
+docker pull akshay9480/flask-auth-app:latest
+
+Docker Hub Repository:
+https://hub.docker.com/r/akshay9480/flask-auth-app
+
+# Complete CI/CD Workflow
+```text
+Developer
+    │
+    ▼
+Git Push
+    │
+    ▼
+GitHub Repository
+    │
+    ▼
+Jenkins Pipeline
+    │
+    ├── Checkout Source
+    ├── Install Dependencies
+    ├── SonarQube Scan
+    ├── Quality Gate Validation
+    ├── Build Docker Image
+    ├── Push Docker Image
+    └── Deploy Application (Optional)
+```
+
+
+
+# Troubleshooting
+## SonarQube Quality Gate Failed
+- Verify SonarQube server is running.
+- Check project Quality Gate conditions.
+- Review the analysis report in SonarQube.
+
+## Docker Login Failed
+- docker login
+- Ensure you use your Docker Hub Personal Access Token instead of your account password.
+
+## Docker Push Failed
+Verify:
+- Docker login is successful.
+- Repository name is correct.
+- Docker image is tagged correctly.
+- docker images
+- docker push akshay9480/flask-auth-app:latest
+
+## Jenkins Pipeline Failed
+Check:
+- Jenkins Console Output
+- SonarQube Logs
+- Docker Logs
+- Jenkins Credentials
+- GitHub Webhook Configuration
 ---
 
 # Conclusion
@@ -451,9 +562,16 @@ This project demonstrates an end-to-end CI/CD pipeline for a containerized Flask
 - Automated Unit & Integration Testing
 - Monitoring with Prometheus & Grafana
 
+# Jenkins Pipeline
 <img width="1920" height="1080" alt="Screenshot (55)" src="https://github.com/user-attachments/assets/2ec07bcf-8129-46c1-bd3a-11cc9be4571d" />
+
+# Security Groups 
 <img width="1920" height="1080" alt="Screenshot (57)" src="https://github.com/user-attachments/assets/42cc6cce-7184-49d2-9002-fcade77a7782" />
+
+# Running containers 
 <img width="1920" height="1080" alt="Screenshot (56)" src="https://github.com/user-attachments/assets/060cddce-b2b1-4199-a7f3-6af51ee15aa8" />
+
+# Web application loginpage
 <img width="1920" height="1080" alt="Screenshot (54)" src="https://github.com/user-attachments/assets/ee21fdde-5bb3-43c9-abf8-a16c76054bcb" />
 <img width="1920" height="1080" alt="Screenshot (53)" src="https://github.com/user-attachments/assets/6bf31ae1-6dd8-426f-bbfc-93cae0664306" />
 
