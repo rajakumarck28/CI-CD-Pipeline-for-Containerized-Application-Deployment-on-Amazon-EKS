@@ -1,88 +1,23 @@
 # DevOps Project Report: Automated CI/CD Pipeline for a 2-Tier Flask Application on AWS
 
----
-
-# Table of Contents
-
-1. [Project Overview](#1-project-overview)
-2. [Architecture Diagram](#2-architecture-diagram)
-3. [Step 1: AWS EC2 Instance Preparation](#3-step-1-aws-ec2-instance-preparation)
-4. [Step 2: Install Dependencies on EC2](#4-step-2-install-dependencies-on-ec2)
-5. [Step 3: Jenkins Installation and Setup](#5-step-3-jenkins-installation-and-setup)
-6. [Step 4: GitHub Repository Configuration](#6-step-4-github-repository-configuration)
-  - [Dockerfile](#dockerfile)
-  - [docker-compose.yml](#docker-composeyml)
-  - [Jenkinsfile](#jenkinsfile)
-7. [Step 5: Jenkins Pipeline Creation and Execution](#7-step-5-jenkins-pipeline-creation-and-execution)
-8. [Conclusion](#8-conclusion)
-9. [Infrastructure Diagram](#9-infrastructure-diagram)
-10. [Workflow Diagram](#10-workflow-diagram)
-
----
-
-# 1. Project Overview
+# Project Overview
 
 This project demonstrates how to implement a complete Continuous Integration and Continuous Deployment (CI/CD) pipeline for a Flask web application.
+
+The pipeline automates the entire software delivery lifecycle—from source code management to deployment—ensuring faster, reliable, and consistent application releases.
 
 The pipeline automatically:
 
 - Clones the source code from GitHub
 - Performs static code analysis using SonarQube
+- Quality Gate validation
 - Builds a Docker image
 - Pushes the Docker image to Docker Hub
 - Deploys the application using Docker Compose
 - Connects the application with a MySQL database
 
----
-
-# 2. Architecture Diagram
-
-```text
-                    +------------------+
-                    |     GitHub       |
-                    | Flask SourceCode |
-                    +--------+---------+
-                             |
-                             |
-                             ▼
-                    +------------------+
-                    |     Jenkins      |
-                    |   CI/CD Pipeline |
-                    +--------+---------+
-                             |
-         +-------------------+------------------+
-         |                                      |
-         ▼                                      ▼
-+------------------+                +-------------------+
-|   SonarQube      |                | Docker Build      |
-| Code Analysis    |                | Docker Image      |
-+------------------+                +---------+---------+
-                                              |
-                                              ▼
-                                   +----------------------+
-                                   |    Docker Hub        |
-                                   | Image Repository     |
-                                   +----------+-----------+
-                                              |
-                                              ▼
-                                   +----------------------+
-                                   | Docker Compose       |
-                                   | Deployment           |
-                                   +----------+-----------+
-                                              |
-                                              ▼
-                                   +----------------------+
-                                   | Flask Application    |
-                                   +----------+-----------+
-                                              |
-                                              ▼
-                                   +----------------------+
-                                   | MySQL Database       |
-                                   +----------------------+
-```
 
 # Technologies Used
-## Technology	Purpose
 | Technology           | Purpose                    |
 | -------------------- | -------------------------- |
 | Python               | Backend Development        |
@@ -97,8 +32,10 @@ The pipeline automatically:
 | Docker Compose       | Multi-container Deployment |
 | Linux (Amazon Linux) | Deployment Environment     |
 
----
+
 # Project Structure
+```text
+
 Automated-CICD-Pipeline-for-Containerized-Flask-Application
 │
 ├── app.py
@@ -114,9 +51,10 @@ Automated-CICD-Pipeline-for-Containerized-Flask-Application
 ├── database/
 │   └── init.sql
 └── README.md
+```
 
----
 # CI/CD Pipeline Workflow
+```text
 
 Developer
      │
@@ -146,12 +84,9 @@ Docker Compose Deployment
      │
      ▼
 Flask Application Running
+```
 
----
-
----
-
-# 3. Step 1: AWS EC2 Instance Preparation
+# Step 1: AWS EC2 Instance Preparation
 
 ## Launch EC2 Instance
 
@@ -160,7 +95,6 @@ Flask Application Running
 - Select `t2.micro`
 - Create Key Pair
 
----
 
 ## Configure Security Group
 
@@ -172,7 +106,6 @@ Flask Application Running
 | Jenkins | 8080 |
 | SonarQube | 9000 |
 
----
 
 ## Connect to EC2
 
@@ -182,7 +115,7 @@ ssh -i key.pem ubuntu@<ec2-public-ip>
 
 ---
 
-# 4. Step 2: Install Dependencies on EC2
+# Step 2: Install Dependencies on EC2
 
 ## Update Packages
 
@@ -190,15 +123,11 @@ ssh -i key.pem ubuntu@<ec2-public-ip>
 sudo apt update && sudo apt upgrade -y
 ```
 
----
-
 ## Install Docker, Git, Compose
 
 ```bash
 sudo apt install git docker.io docker-compose-v2 -y
 ```
-
----
 
 ## Enable Docker
 
@@ -206,8 +135,6 @@ sudo apt install git docker.io docker-compose-v2 -y
 sudo systemctl start docker
 sudo systemctl enable docker
 ```
-
----
 
 ## Add User to Docker Group
 
@@ -218,15 +145,13 @@ newgrp docker
 
 ---
 
-# 5. Step 3: Jenkins Installation and Setup
+# Step 3: Jenkins Installation and Setup
 
 ## Install Java
 
 ```bash
 sudo apt install openjdk-21-jdk -y
 ```
-
----
 
 ## Install Jenkins
 
@@ -243,16 +168,12 @@ sudo apt update
 sudo apt install jenkins -y
 ```
 
----
-
 ## Start Jenkins
 
 ```bash
 sudo systemctl start jenkins
 sudo systemctl enable jenkins
 ```
-
----
 
 ## Get Jenkins Password
 
@@ -266,8 +187,6 @@ Open:
 http://<ec2-public-ip>:8080
 ```
 
----
-
 ## Give Docker Permission to Jenkins
 
 ```bash
@@ -275,24 +194,18 @@ sudo usermod -aG docker jenkins
 sudo systemctl restart jenkins
 ```
 # Install SonarQube
----
+```bash
 docker run -d --name sonarqube -p 9000:9000 sonarqube:lts-community
-
+```
 ---
----
 
-# 6. Step 4: GitHub Repository Configuration
+# Step 4: Clone Repository
 
-Project files:
-
-```text
-app.py
-Dockerfile
-docker-compose.yml
-Jenkinsfile
-requirements.txt
-templates/
-static/
+```bash
+git clone https://github.com/rajakumarck28/Automated-CICD-Pipeline-for-Containerized-Flask-Application.git
+```
+```bash
+cd Automated-CICD-Pipeline-for-Containerized-Flask-Application
 ```
 
 ---
@@ -450,7 +363,7 @@ pipeline {
 
 ---
 
-# 7. Step 5: Jenkins Pipeline Creation and Execution
+# Step 5: Jenkins Pipeline Creation and Execution
 
 ## Create Jenkins Pipeline
 
@@ -460,8 +373,6 @@ pipeline {
 - Git
 - Add GitHub Repository URL
 
----
-
 ## Build Pipeline
 
 Click:
@@ -470,15 +381,11 @@ Click:
 Build Now
 ```
 
----
-
 ## Verify Containers
 
 ```bash
 docker ps
 ```
-
----
 
 ## Access Application
 
@@ -488,44 +395,28 @@ http://<ec2-public-ip>:5000
 
 ---
 
-# 8. Conclusion
+# Conclusion
 
-The CI/CD pipeline is fully automated using Jenkins and Docker. Whenever code is pushed to GitHub, Jenkins automatically builds and deploys the updated Flask application on AWS EC2.
-
----
-
-# 9. Infrastructure Diagram
-
-```text
-AWS EC2
-│
-├── Jenkins
-├── Docker
-│   ├── Flask Container
-│   └── MySQL Container
-```
+This project demonstrates an end-to-end CI/CD pipeline for a containerized Flask application using GitHub, Jenkins, SonarQube, Docker, Docker Hub, Docker Compose, and MySQL. It automates code integration, quality analysis, Docker image creation, image publishing, and application deployment. The project highlights practical DevOps skills in CI/CD automation, containerization, code quality, and deployment, providing a scalable and reliable software delivery workflow.
 
 ---
+# Future Enhancements
+- Kubernetes Deployment
+- AWS EKS Integration
+- NGINX Reverse Proxy
+- HTTPS with SSL/TLS
+- GitHub Webhook Integration
+- Automated Unit & Integration Testing
+- Monitoring with Prometheus & Grafana
 
-# 10. Workflow Diagram
+<img width="1920" height="1080" alt="Screenshot (55)" src="https://github.com/user-attachments/assets/2ec07bcf-8129-46c1-bd3a-11cc9be4571d" />
+<img width="1920" height="1080" alt="Screenshot (57)" src="https://github.com/user-attachments/assets/42cc6cce-7184-49d2-9002-fcade77a7782" />
+<img width="1920" height="1080" alt="Screenshot (56)" src="https://github.com/user-attachments/assets/060cddce-b2b1-4199-a7f3-6af51ee15aa8" />
+<img width="1920" height="1080" alt="Screenshot (54)" src="https://github.com/user-attachments/assets/ee21fdde-5bb3-43c9-abf8-a16c76054bcb" />
+<img width="1920" height="1080" alt="Screenshot (53)" src="https://github.com/user-attachments/assets/6bf31ae1-6dd8-426f-bbfc-93cae0664306" />
 
-```text
-Developer
-   ↓
-GitHub Repository
-   ↓
-Jenkins Pipeline
-   ↓
-Docker Build
-   ↓
-Docker Compose
-   ↓
-Flask + MySQL Containers
-   ↓
-AWS EC2 Deployment
-```
-<img width="1920" height="1080" alt="Screenshot (136)" src="https://github.com/user-attachments/assets/9f3ff503-65d9-4391-ac76-0117fc59958f" />
-<img width="1920" height="1080" alt="Screenshot (134)" src="https://github.com/user-attachments/assets/b0b00866-bb6a-4090-9fae-b35062811ce2" />
-<img width="1920" height="1080" alt="Screenshot (138)" src="https://github.com/user-attachments/assets/6904dbf3-df54-44b0-8943-f32d76b52f50" />
-<img width="1920" height="1080" alt="Screenshot (139)" src="https://github.com/user-attachments/assets/2b5be0df-0316-47f8-85fd-9a9336bfca02" />
-<img width="1920" height="1080" alt="Screenshot (140)" src="https://github.com/user-attachments/assets/0e1117d3-d18e-47f2-8686-d1080d407f5c" />
+
+
+
+
+
