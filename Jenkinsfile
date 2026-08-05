@@ -62,7 +62,7 @@ pipeline {
         stage('Docker Compose Rebuild') {
             steps {
                 sh '''
-                docker compose up -d --build
+                docker-compose up -d --build
                 '''
             }
         }
