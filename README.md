@@ -1,4 +1,4 @@
-# DevOps Project Report: Automated CI/CD Pipeline for a 2-Tier Flask Application on AWS
+# DevOps Project Report: End-to-End DevOps CI/CD Pipeline for a Flask Application
 
 # Project Overview
 
@@ -85,6 +85,17 @@ Docker Compose Deployment
      ▼
 Flask Application Running
 ```
+# Prerequisites
+
+Install the following software before running the project:
+
+- Python 3.x
+- Git
+- Docker
+- Docker Compose
+- Jenkins
+- SonarQube Server
+- Docker Hub Account
 
 # Step 1: AWS EC2 Instance Preparation
 
@@ -199,6 +210,15 @@ docker run -d --name sonarqube -p 9000:9000 sonarqube:lts-community
 ```
 ---
 
+Verify the installation:
+
+- python --version
+- git --version
+- docker --version
+- docker compose version
+- java -version
+- jenkins --version
+  
 # Step 4: Clone Repository
 
 ```bash
@@ -225,8 +245,25 @@ EXPOSE 5000
 
 CMD ["python", "app.py"]
 ```
+# Run the Application Locally
 
----
+## Docker
+
+Build Docker Image
+```bash
+docker build -t akshay9480/flask-auth-app:latest .
+```
+Run Docker Container
+```bash
+docker run -d \
+-p 5000:5000 \
+--name flask-auth-app \
+akshay9480/flask-auth-app:latest
+```
+Check Running Containers
+```bash
+docker ps
+```
 
 # docker-compose.yml
 
@@ -273,8 +310,13 @@ services:
 volumes:
   mysql-data:
 ```
+## Docker Compose
+Docker Compose makes it easy to build and run the application with a single command.
 
----
+Build and Start
+```bash
+docker compose up --build -d
+```
 
 # Jenkinsfile
 
