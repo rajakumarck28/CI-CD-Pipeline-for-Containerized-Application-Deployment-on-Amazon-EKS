@@ -1,4 +1,4 @@
-# DevOps Project Report: End-to-End DevOps CI/CD Pipeline for a Flask Application
+# Project : CICD-Pipeline-for-a-Flask-Application-using-Docker-Compose
 
 # Project Overview
 
